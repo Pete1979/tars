@@ -3,7 +3,7 @@ import sys
 import time
 import speech_recognition as sr
 import json
-from ollama_prod import Client, ChatResponse
+from ollama import Client, ChatResponse
 from contextlib import contextmanager
 import asyncio
 from edge_tts import Communicate
@@ -126,7 +126,8 @@ while True:
             print("Listening for wake phrase...")
             listening_for_wake = False  # Prevent further spamming
         if listen_for_wake_phrase():  # Wake phrase detected
-            asyncio.run(speak_response("Huh!?"))  # Respond to wake phrase
+            # Respond to wake phrase with "Huh!?"
+            asyncio.run(speak_response("Huh!? What do you want?"))
             conversation_active = True
             timeout_start = time.time()
             listening_for_command = True  # Start listening for commands
@@ -149,3 +150,4 @@ while True:
             listening_for_wake = True  # Go back to listening for wake phrase
             print("Conversation timed out. Listening for wake phrase...")
             listening_for_command = False  # Reset command listening
+
