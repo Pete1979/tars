@@ -79,7 +79,7 @@ def load_character_card(file_path):
         return character_card
 
 # Function to interact with Ollama
-def interact_with_olama(command, character_card_file="TARS_alpha.json"):
+def interact_with_ollama(command, character_card_file="TARS_alpha.json"):
     # Load character card from the charactercards folder
     character_card = load_character_card(character_card_file)
     
@@ -88,12 +88,8 @@ def interact_with_olama(command, character_card_file="TARS_alpha.json"):
 
     personality = character_card.get("personality", "No personality found.")  # Extract personality details
 
-    # Replace this with actual API query to Ollama
     url = "http://192.168.0.135:11434"  # Update with Ollama's API endpoint
-    payload = '%s' % command
-    c = Client(
-        host=url
-    )
+    c = Client(host=url)
     r: ChatResponse = c.chat(
         model='llama3.2',
         messages=[
@@ -103,15 +99,14 @@ def interact_with_olama(command, character_card_file="TARS_alpha.json"):
             },
             {
                 'role': 'user',
-                'content': payload  # Use payload here directly, not as a string
+                'content': command  # Include the user command here
             }
         ]
     )
-    r_str = r['message']['content']
-    return r_str
+    return r['message']['content']
 
-# Function to detect and read text from the camera with preprocessing
-def detect_and_read_text():
+# Function to detect text, then ask Ollama to interpret it
+def detect_and_ask_ollama():
     print("Capturing frame for OCR...")
     
     # Capture the frame from the camera
@@ -137,16 +132,18 @@ def detect_and_read_text():
 
     # Save the processed image for later inspection
     processed_image_path = os.path.join(output_dir, "processed_image.png")
-    cv2.imwrite(processed_image_path, resized)  # Save processed image to file
+    cv2.imwrite(processed_image_path, resized)
 
     # Use pytesseract to extract text from the processed image
     text = pytesseract.image_to_string(resized)
 
     print(f"OCR Result: {text}")  # Debugging print
 
-    if text.strip():  # Only speak if there's recognizable text
+    if text.strip():  # Only interact with Ollama if text is detected
         print(f"Recognized text: {text}")
-        return f"I see the following text: {text}"
+        ollama_query = f"I see the following text: {text}. Can you analyze it or tell me more about it?"
+        ollama_response = interact_with_ollama(ollama_query)
+        return ollama_response
     else:
         print("No text detected.")
         return "I could not detect any text."
@@ -159,10 +156,10 @@ while True:
     if command:
         print(f"Command received: {command}")
         if "what do you see" in command.lower():
-            response_text = detect_and_read_text()
+            response_text = detect_and_ask_ollama()
         else:
-            response_text = interact_with_olama(command)
+            response_text = interact_with_ollama(command)
 
-        print(f"Response after OCR: {response_text}")  # Print the response
+        print(f"Response after processing: {response_text}")  # Print the response
         asyncio.run(speak_response(response_text))  # Speak the response
         print("Listening for a command...")  # Print again after each response
