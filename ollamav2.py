@@ -54,15 +54,29 @@ async def speak_response(response):
     subprocess.run(['mpg123', '-q', 'response.mp3'], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
 def load_character_card(file_path):
-    """Load the character card JSON file."""
-    with open(file_path, 'r') as file:
-        return json.load(file)
+    """Load the character card JSON file from the charactercards folder."""
+    charactercards_folder = "charactercards"
+    card_path = os.path.join(charactercards_folder, file_path)
+    
+    if not os.path.exists(card_path):
+        print(f"[DEBUG] Character card file '{file_path}' not found in '{charactercards_folder}' directory.")
+        return None
+
+    print(f"[DEBUG] Loading character card from: {card_path}")
+    with open(card_path, 'r') as file:
+        character_card = json.load(file)
+        print(f"[DEBUG] Loaded character card: {json.dumps(character_card, indent=2)}")
+        return character_card
 
 # Function to interact with Ollama
-def interact_with_olama(command):
-    # Load character card
-    character_card = load_character_card("TARS_alpha.json")
-    personality = character_card["personality"]  # Extract personality details
+def interact_with_olama(command, character_card_file="TARS_alpha.json"):
+    # Load character card from the charactercards folder
+    character_card = load_character_card(character_card_file)
+    
+    if character_card is None:
+        return "Error: Character card not found."
+
+    personality = character_card.get("personality", "No personality found.")  # Extract personality details
 
     # Replace this with actual API query to Ollama
     url = "http://192.168.0.135:11434"  # Update with Ollama's API endpoint
@@ -84,7 +98,7 @@ def interact_with_olama(command):
         ]
     )
     r_str = r['message']['content']
-    print(r_str)
+    print(f"[DEBUG] Response from Ollama: {r_str}")
     return r_str
 
 # Main loop
