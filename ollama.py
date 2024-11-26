@@ -6,6 +6,7 @@ from ollama import Client, ChatResponse
 from contextlib import contextmanager
 import asyncio
 from edge_tts import Communicate
+import subprocess
 
 # Suppression context manager
 @contextmanager
@@ -28,15 +29,13 @@ recognizer = sr.Recognizer()
 def listen_for_command():
     with suppress_alsa_output():  # Suppress ALSA output
         with sr.Microphone() as source:
-            print("Listening for a command...")
             audio = recognizer.listen(source)
             try:
                 command = recognizer.recognize_google(audio)
                 print(f"You said: {command}")
                 return command
             except sr.UnknownValueError:
-                print("Sorry, I did not understand that.")
-                return None
+                return None  # No need to print or say anything if command is not understood
             except sr.RequestError:
                 print("Sorry, there was an error with the speech recognition service.")
                 return None
@@ -50,8 +49,9 @@ async def speak_response(response):
     
     # Save the audio response to a file
     await communicate.save("response.mp3")
-    # Play the saved response
-    os.system("mpg123 response.mp3")  # Requires mpg123 or a similar MP3 player
+    
+    # Use subprocess to suppress mpg123 output
+    subprocess.run(['mpg123', '-q', 'response.mp3'], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
 def load_character_card(file_path):
     """Load the character card JSON file."""
@@ -88,8 +88,11 @@ def interact_with_olama(command):
     return r_str
 
 # Main loop
+print("Listening for a command...")  # Print once when starting the loop
+
 while True:
     command = listen_for_command()
     if command:
         response = interact_with_olama(command)
         asyncio.run(speak_response(response))
+        print("Listening for a command...")  # Print again after each response
