@@ -35,8 +35,13 @@ if not cap.isOpened():
     print("Error: Could not open video stream.")
     sys.exit()
 
-# Function to listen for the wake phrase
 def listen_for_wake_phrase():
+    """
+    Listen for the wake phrase using the microphone.
+    
+    Returns:
+        bool: True if wake phrase is detected, otherwise False.
+    """
     with suppress_alsa_output():  # Suppress ALSA output
         with sr.Microphone() as source:
             try:
@@ -46,12 +51,20 @@ def listen_for_wake_phrase():
                 return "hey buddy" in phrase.lower()  # Match wake phrase
             except sr.UnknownValueError:
                 return False  # No need to print if not understood
-            except sr.RequestError:
-                print("Error with speech recognition service.")
+            except sr.RequestError as e:
+                print(f"Error with speech recognition service: {e}")
+                return False
+            except Exception as e:
+                print(f"Unexpected error: {e}")
                 return False
 
-# Function to listen for a voice command
 def listen_for_command():
+    """
+    Listen for a voice command using the microphone.
+    
+    Returns:
+        str: The recognized command, or None if not understood or an error occurs.
+    """
     with suppress_alsa_output():  # Suppress ALSA output
         with sr.Microphone() as source:
             try:
@@ -61,54 +74,101 @@ def listen_for_command():
                 return command
             except sr.UnknownValueError:
                 return None  # No need to print if not understood
-            except sr.RequestError:
-                return None  # Error with the service; return None without printing
+            except sr.RequestError as e:
+                print(f"Error with speech recognition service: {e}")
+                return None
+            except Exception as e:
+                print(f"Unexpected error: {e}")
+                return None
 
-# Function to speak a response using Edge TTS
 async def speak_response(response):
-    voice = "en-US-GuyNeural"  # TARS-like voice
-    rate = "-5%"  # Slightly slower delivery
-    pitch = "-2Hz"  # Slightly lower pitch for depth
-    communicate = Communicate(text=response, voice=voice, rate=rate, volume="+5%")
-    await communicate.save("response.mp3")
-    subprocess.run(['mpg123', '-q', 'response.mp3'], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    """
+    Speak a response using Edge TTS.
+    
+    Args:
+        response (str): The text response to speak.
+    """
+    try:
+        voice = "en-US-GuyNeural"  # TARS-like voice
+        rate = "-5%"  # Slightly slower delivery
+        pitch = "-2Hz"  # Slightly lower pitch for depth
+        communicate = Communicate(text=response, voice=voice, rate=rate, volume="+5%")
+        await communicate.save("response.mp3")
+        subprocess.run(['mpg123', '-q', 'response.mp3'], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    except Exception as e:
+        print(f"Error speaking response: {e}")
 
 def load_character_card(file_path):
-    """Load the character card JSON file from the charactercards folder."""
+    """
+    Load the character card JSON file from the charactercards folder.
+    
+    Args:
+        file_path (str): The path to the character card file.
+    
+    Returns:
+        dict: The content of the character card file, or None if the file does not exist.
+    """
     charactercards_folder = "charactercards"
     card_path = os.path.join(charactercards_folder, file_path)
     if not os.path.exists(card_path):
+        print(f"Error: Character card file {file_path} not found.")
         return None
-    with open(card_path, 'r') as file:
-        return json.load(file)
+    try:
+        with open(card_path, 'r') as file:
+            return json.load(file)
+    except Exception as e:
+        print(f"Error loading character card: {e}")
+        return None
 
-# Function to interact with Ollama
 def interact_with_olama(command, character_card_file="TARS_alpha.json"):
+    """
+    Interact with Ollama using a given command and character card.
+    
+    Args:
+        command (str): The command to send to Ollama.
+        character_card_file (str): The character card file to use.
+    
+    Returns:
+        str: The response from Ollama.
+    """
     character_card = load_character_card(character_card_file)
     if not character_card:
         return "Error: Character card not found."
     personality = character_card.get("personality", "No personality found.")
     url = "http://192.168.0.135:11434"  # Update with Ollama's API endpoint
     payload = command
-    c = Client(host=url)
-    r: ChatResponse = c.chat(
-        model='llama3.2',
-        messages=[
-            {'role': 'system', 'content': personality},
-            {'role': 'user', 'content': payload}
-        ]
-    )
-    return r['message']['content']
+    try:
+        c = Client(host=url)
+        r: ChatResponse = c.chat(
+            model='llama3.2',
+            messages=[
+                {'role': 'system', 'content': personality},
+                {'role': 'user', 'content': payload}
+            ]
+        )
+        return r['message']['content']
+    except Exception as e:
+        print(f"Error interacting with Ollama: {e}")
+        return "Error interacting with Ollama."
 
-# Function to describe the camera's view
 def describe_camera_view():
+    """
+    Capture an image from the camera and perform OCR to describe the view.
+    
+    Returns:
+        str: The text detected in the camera view, or an error message if detection fails.
+    """
     print("Capturing frame for OCR...")
-    ret, frame = cap.read()
-    if not ret:
-        return "Failed to capture image."
-    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-    text = pytesseract.image_to_string(gray)
-    return f"The camera sees the following text: {text}" if text.strip() else "I could not detect any text."
+    try:
+        ret, frame = cap.read()
+        if not ret:
+            return "Failed to capture image."
+        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+        text = pytesseract.image_to_string(gray)
+        return f"The camera sees the following text: {text}" if text.strip() else "I could not detect any text."
+    except Exception as e:
+        print(f"Error describing camera view: {e}")
+        return "Error describing camera view."
 
 # Main loop
 print("Starting TARS...")
@@ -126,8 +186,10 @@ while True:
             print("Listening for wake phrase...")
             listening_for_wake = False  # Prevent further spamming
         if listen_for_wake_phrase():  # Wake phrase detected
-            # Respond to wake phrase with "Huh!?"
-            asyncio.run(speak_response("Huh!? What do you want?"))
+            try:
+                asyncio.run(speak_response("Huh!? What do you want?"))  # Respond to wake phrase
+            except Exception as e:
+                print(f"Error responding to wake phrase: {e}")
             conversation_active = True
             timeout_start = time.time()
             listening_for_command = True  # Start listening for commands
@@ -144,10 +206,12 @@ while True:
             else:
                 response_text = interact_with_olama(command)
             print(f"Response: {response_text}")
-            asyncio.run(speak_response(response_text))
+            try:
+                asyncio.run(speak_response(response_text))
+            except Exception as e:
+                print(f"Error responding to command: {e}")
         if time.time() - timeout_start > conversation_timeout:
             conversation_active = False  # End conversation after timeout
             listening_for_wake = True  # Go back to listening for wake phrase
             print("Conversation timed out. Listening for wake phrase...")
             listening_for_command = False  # Reset command listening
-
