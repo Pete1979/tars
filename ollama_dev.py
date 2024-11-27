@@ -51,7 +51,13 @@ def interact_with_olama(command, character_card_file="TARS_alpha.json"):
     character_card = load_character_card(character_card_file)
     if not character_card:
         return "Error: Character card not found."
+    
     personality = character_card.get("personality", "No personality found.")
+    scenario = character_card.get("scenario", "No scenario found.")
+    greeting = character_card.get("char_greeting", "No greeting found.")
+    example_dialogue = character_card.get("example_dialogue", "No example dialogue found.")
+    quirks = character_card.get("metadata", {}).get("quirks", "No quirks found.")
+    
     url = "http://192.168.0.135:11434"
     payload = command
     try:
@@ -59,7 +65,7 @@ def interact_with_olama(command, character_card_file="TARS_alpha.json"):
         r: ChatResponse = c.chat(
             model='llama3.2',
             messages=[
-                {'role': 'system', 'content': personality},
+                {'role': 'system', 'content': f"{personality}\n{scenario}\n{greeting}\n{example_dialogue}\n{quirks}"},
                 {'role': 'user', 'content': payload}
             ]
         )
