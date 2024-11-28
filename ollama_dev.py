@@ -1,28 +1,16 @@
 import os
 import sys
 import time
-import speech_recognition as sr
 import json
-from ollama import Client, ChatResponse
-from contextlib import contextmanager
 import asyncio
-from edge_tts import Communicate
 import subprocess
-import cv2
 import pytesseract
-from modules.discord_bot import DiscordBot  # Import the bot from the modules folder
-
-@contextmanager
-def suppress_alsa_output():
-    devnull = os.open(os.devnull, os.O_WRONLY)
-    old_stderr = os.dup(2)
-    os.dup2(devnull, 2)
-    os.close(devnull)
-    try:
-        yield
-    finally:
-        os.dup2(old_stderr, 2)
-        os.close(old_stderr)
+import speech_recognition as sr
+from edge_tts import Communicate
+from modules.camera import initialize_camera, capture_frame
+from modules.discord_bot import DiscordBot
+from modules.speech_recognition import listen_for_wake_phrase, listen_for_command
+from modules.ollama_interaction import interact_with_olama  # Updated import statement
 
 async def speak_response(response):
     try:
@@ -35,60 +23,11 @@ async def speak_response(response):
     except Exception as e:
         print(f"Error speaking response: {e}")
 
-def load_character_card(file_path):
-    charactercards_folder = "charactercards"
-    card_path = os.path.join(charactercards_folder, file_path)
-    if not os.path.exists(card_path):
-        print(f"Error: Character card file {file_path} not found.")
-        return None
-    try:
-        with open(card_path, 'r') as file:
-            return json.load(file)
-    except Exception as e:
-        print(f"Error loading character card: {e}")
-        return None
-
-def interact_with_olama(command, character_card_file="TARS_alpha.json", user_name="human"):
-    character_card = load_character_card(character_card_file)
-    if not character_card:
-        return "Error: Character card not found."
-    
-    personality = character_card.get("personality", "No personality found.")
-    scenario = character_card.get("scenario", "No scenario found.")
-    greeting = character_card.get("char_greeting", "No greeting found.")
-    example_dialogue = character_card.get("example_dialogue", "No example dialogue found.")
-    quirks = character_card.get("metadata", {}).get("quirks", {})
-    
-    # Replace {{user}} with user_name in all relevant fields
-    personality = personality.replace("{{user}}", user_name)
-    scenario = scenario.replace("{{user}}", user_name)
-    greeting = greeting.replace("{{user}}", user_name)
-    example_dialogue = example_dialogue.replace("{{user}}", user_name)
-    for key, value in quirks.items():
-        if isinstance(value, str):
-            quirks[key] = value.replace("{{user}}", user_name)
-    
-    url = "http://192.168.0.135:11434"
-    payload = command
-    try:
-        c = Client(host=url)
-        r: ChatResponse = c.chat(
-            model='llama3.2',
-            messages=[
-                {'role': 'system', 'content': f"{personality}\n{scenario}\n{greeting}\n{example_dialogue}\n{quirks}"},
-                {'role': 'user', 'content': payload}
-            ]
-        )
-        return r['message']['content'].replace("{{user}}", user_name)
-    except Exception as e:
-        print(f"Error interacting with Ollama: {e}")
-        return "Error interacting with Ollama."
-
 def describe_camera_view(cap):
     print("Capturing frame for OCR...")
     try:
-        ret, frame = cap.read()
-        if not ret:
+        frame = capture_frame(cap)
+        if frame is None:
             return "Failed to capture image."
         gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
         text = pytesseract.image_to_string(gray)
@@ -97,49 +36,12 @@ def describe_camera_view(cap):
         print(f"Error describing camera view: {e}")
         return "Error describing camera view."
 
-def listen_for_wake_phrase(recognizer):
-    with suppress_alsa_output():
-        with sr.Microphone() as source:
-            try:
-                audio = recognizer.listen(source)
-                phrase = recognizer.recognize_google(audio)
-                print(f"You said: {phrase}")
-                return "hey buddy" in phrase.lower()
-            except sr.UnknownValueError:
-                return False
-            except sr.RequestError as e:
-                print(f"Error with speech recognition service: {e}")
-                return False
-            except Exception as e:
-                print(f"Unexpected error: {e}")
-                return False
-
-def listen_for_command(recognizer):
-    with suppress_alsa_output():
-        with sr.Microphone() as source:
-            try:
-                audio = recognizer.listen(source)
-                command = recognizer.recognize_google(audio)
-                print(f"You said: {command}")
-                return command
-            except sr.UnknownValueError:
-                return None
-            except sr.RequestError as e:
-                print(f"Error with speech recognition service: {e}")
-                return None
-            except Exception as e:
-                print(f"Unexpected error: {e}")
-                return None
-
 async def main_loop():
     recognizer = sr.Recognizer()
-    cap = cv2.VideoCapture("/dev/video0")
-    if not cap.isOpened():
-        print("Error: Could not open video stream.")
-        sys.exit()
+    cap = initialize_camera("/dev/video0")
     
     conversation_active = False
-    timeout_start = time.time
+    timeout_start = time.time()
     conversation_timeout = 300
 
     listening_for_wake = True
