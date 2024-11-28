@@ -1,3 +1,6 @@
+Sure, here is an enhanced version of your `README.md` that you can copy and paste:
+
+```markdown
 # TARS
 
 TARS is a project designed for advanced speech recognition, text-to-speech, and interaction with external APIs such as Ollama and Discord Bots.
@@ -21,54 +24,77 @@ TARS is a project designed for advanced speech recognition, text-to-speech, and 
    ```bash
    git clone https://github.com/Pete1979/tars.git
    cd tars
-Install Dependencies:
-pip install -r requirements.txt
-Usage
-Speech Recognition and TTS
-Run the ollama_prod.py script:
+   ```
 
-python ollama_prod.py
-Listen for Wake Phrase:
-The script will listen for the wake phrase "hey buddy" and then process subsequent voice commands.
+2. **Install Dependencies**:
+   ```bash
+   pip install -r requirements.txt
+   ```
 
-Interact with Ollama:
-Customize the interact_with_olama function to interact with the Ollama API using specific character cards.
+## Usage
 
-Discord Bot
-Set Up Discord Bot:
+### Speech Recognition and TTS
 
-Create a new bot on the Discord Developer Portal.
-Copy the bot token and add it to your environment variables.
-Run the Discord Bot:
+1. **Run the `ollama_prod.py` script**:
+   ```bash
+   python ollama_prod.py
+   ```
 
-python modules/discord_bot.py
-Interact with the Bot:
-Mention the bot in any channel it has access to and it will process your messages.
+2. **Listen for Wake Phrase**:
+   The script will listen for the wake phrase "hey buddy" and then process subsequent voice commands.
 
-Motion Detection
-Run the Motion Detection Test:
+3. **Interact with Ollama**:
+   Customize the `interact_with_olama` function to interact with the Ollama API using specific character cards.
 
-python tests/motiondetecttest.py
-Monitor Motion:
-The script will detect motion and save frames where motion is detected.
+### Discord Bot
 
-Configuration
-TTS Server Configuration:
-Edit the TTS server endpoint in modules/tts.py to point to your TTS server.
+1. **Set Up Discord Bot**:
+   - Create a new bot on the [Discord Developer Portal](https://discord.com/developers/applications).
+   - Copy the bot token and add it to your environment variables.
 
-Camera Device Path:
-Update the camera device path in ollama_prod.py and tests/motiondetecttest.py to match your system's configuration.
+2. **Run the Discord Bot**:
+   ```bash
+   python modules/discord_bot.py
+   ```
 
-Contributing
-Fork the repository.
-Create a new branch (git checkout -b feature-branch).
-Make your changes.
-Commit your changes (git commit -am 'Add new feature').
-Push to the branch (git push origin feature-branch).
-Create a new Pull Request.
-License
-This project is licensed under the MIT License. See the LICENSE file for details.
+3. **Interact with the Bot**:
+   Mention the bot in any channel it has access to and it will process your messages.
 
-Acknowledgments
-Inspired by the TARS robot from the movie "Interstellar".
-Uses various open-source libraries and APIs for functionality.
+### Motion Detection
+
+1. **Run the Motion Detection Test**:
+   ```bash
+   python tests/motiondetecttest.py
+   ```
+
+2. **Monitor Motion**:
+   The script will detect motion and save frames where motion is detected.
+
+## Configuration
+
+- **TTS Server Configuration**:
+  Edit the TTS server endpoint in `modules/tts.py` to point to your TTS server.
+
+- **Camera Device Path**:
+  Update the camera device path in `ollama_prod.py` and `tests/motiondetecttest.py` to match your system's configuration.
+
+## Contributing
+
+1. Fork the repository.
+2. Create a new branch (`git checkout -b feature-branch`).
+3. Make your changes.
+4. Commit your changes (`git commit -am 'Add new feature'`).
+5. Push to the branch (`git push origin feature-branch`).
+6. Create a new Pull Request.
+
+## License
+
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
+
+## Acknowledgments
+
+- Inspired by the TARS robot from the movie "Interstellar".
+- Uses various open-source libraries and APIs for functionality.
+```
+
+You can copy and paste this content into your `README.md` file.
