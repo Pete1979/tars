@@ -25,7 +25,7 @@ async def main_loop():
     listening_for_command = False
 
     # Create an instance of the DiscordBot with necessary details
-    discord_bot = DiscordBot(bot_token='YOUR_TOKEN_HERE', channel_id='YOU_CHANNEL_ID_HERE', char_greeting="Hello! TARS is online.")
+    discord_bot = DiscordBot(bot_token='YOUR_TOKEN_HERE', channel_id='CHANNEL_ID_HERE', char_greeting="Hello! TARS is online.")
 
     while True:
         if not conversation_active:
@@ -34,7 +34,7 @@ async def main_loop():
                 listening_for_wake = False
             if listen_for_wake_phrase(recognizer):
                 try:
-                    await speak_response("Huh!? What do you want?")
+                    speak_response("Huh!? What do you want?")
                 except Exception as e:
                     print(f"Error responding to wake phrase: {e}")
                 conversation_active = True
@@ -54,7 +54,7 @@ async def main_loop():
                     response_text = interact_with_olama(command)
                 print(f"Response: {response_text}")
                 try:
-                    await speak_response(response_text)
+                    speak_response(response_text)
                 except Exception as e:
                     print(f"Error responding to command: {e}")
             if time.time() - timeout_start > conversation_timeout:

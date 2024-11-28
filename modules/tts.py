@@ -3,7 +3,7 @@ import subprocess
 
 def speak_response(response):
     try:
-        url = "http://192.168.0.135:8020/api/tts"  # Updated port to 8020
+        url = "http://192.168.0.135:8020/tts"  # Updated endpoint based on API documentation
         payload = {
             "text": response,
             "voice": "en_us_male"  # Change this to the desired voice available in xtts-api-server
