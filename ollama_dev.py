@@ -6,35 +6,12 @@ import asyncio
 import subprocess
 import pytesseract
 import speech_recognition as sr
-from edge_tts import Communicate
 from modules.camera import initialize_camera, capture_frame
 from modules.discord_bot import DiscordBot
 from modules.speech_recognition import listen_for_wake_phrase, listen_for_command
-from modules.ollama_interaction import interact_with_olama  # Updated import statement
-
-async def speak_response(response):
-    try:
-        voice = "en-US-GuyNeural"
-        rate = "-5%"
-        pitch = "-2Hz"
-        communicate = Communicate(text=response, voice=voice, rate=rate, volume="+5%")
-        await communicate.save("response.mp3")
-        subprocess.run(['mpg123', '-q', 'response.mp3'], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-    except Exception as e:
-        print(f"Error speaking response: {e}")
-
-def describe_camera_view(cap):
-    print("Capturing frame for OCR...")
-    try:
-        frame = capture_frame(cap)
-        if frame is None:
-            return "Failed to capture image."
-        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-        text = pytesseract.image_to_string(gray)
-        return f"The camera sees the following text: {text}" if text.strip() else "I could not detect any text."
-    except Exception as e:
-        print(f"Error describing camera view: {e}")
-        return "Error describing camera view."
+from modules.ollama_interaction import interact_with_olama
+from modules.tts import speak_response  # Updated import statement
+from modules.ocr import describe_camera_view  # Updated import statement
 
 async def main_loop():
     recognizer = sr.Recognizer()
