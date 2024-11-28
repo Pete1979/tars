@@ -4,7 +4,7 @@ import subprocess
 def speak_response(response_text):
     try:
         # TTS server endpoints
-        url = "http://192.168.2.68:8020/tts_to_audio/"
+        url = "http://192.168.0.135:8020/tts_to_audio/"
         payload = {
             "text": response_text,  # The text to be converted to speech
             "speaker_wav": "TARS2",  # Specify the speaker
