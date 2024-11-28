@@ -33,3 +33,4 @@ def speak_response(response_text):
         print(f"Error playing audio: {e}")
     except Exception as e:
         print(f"An unexpected error occurred: {e}")
+        
