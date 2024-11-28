@@ -10,6 +10,7 @@ from edge_tts import Communicate
 import subprocess
 import cv2
 import pytesseract
+from modules.discord_bot import DiscordBot  # Import the bot from the modules folder
 
 @contextmanager
 def suppress_alsa_output():
@@ -138,11 +139,14 @@ async def main_loop():
         sys.exit()
     
     conversation_active = False
-    timeout_start = time.time()
+    timeout_start = time.time
     conversation_timeout = 300
 
     listening_for_wake = True
     listening_for_command = False
+
+    # Create an instance of the DiscordBot with necessary details
+    discord_bot = DiscordBot(bot_token='YOUR_TOKEN_HERE', channel_id='YOU_CHANNEL_ID_HERE', char_greeting="Hello! TARS is online.")
 
     while True:
         if not conversation_active:
